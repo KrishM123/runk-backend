@@ -213,8 +213,7 @@ def rank_products():
                 'product_name': product_name,
                 'user_email': user_email
             }
-            # Replace 'http://other-api.com/get_review_similarity' with the actual API endpoint
-            response = requests.post('http://other-api.com/get_review_similarity', json=payload)
+            response = requests.post('https://runk-backend.vercel.app/ranked_review', json=payload)
             
             if response.status_code == 200:
                 data = response.json()  # Should be a list of tuples
