@@ -21,7 +21,13 @@ def iterate(data):
 
         product_dict[product['product_id']] = calculate_weighted_average(scores)
     
-    product_dict = dict(sorted(product_dict.items(), key=lambda item: item[1], reverse=True))
+    product_dict = sorted(product_dict.items(), key=lambda item: item[1], reverse=True)
+
+    simple_product_dict = []
+    for i in product_dict:
+        simple_product_dict.append(i[0])
+    return simple_product_dict
+    
     return product_dict
 
 def calculate_weighted_average(scores):
