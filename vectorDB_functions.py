@@ -1,5 +1,4 @@
-import torch
-from models.embed_reviews import SBERT_embedding_model
+import numpy as np
 from pinecone.grpc import PineconeGRPC as Pinecone
 from dotenv import load_dotenv
 import os
@@ -19,8 +18,8 @@ def update_profile(profile_id, review: str, product_id):
     '''
     review = requests.post(url + "/encode_review", json={"input": review})["result"]
     response = index.fetch(ids=[str(profile_id)])
-    latent_profile = torch.tensor(response['vectors'][str(profile_id)]["values"])
-    embeddings = torch.tensor(requests.post(url + "/mlp", json={"input": review})["result"], dtype=torch.float32)
+    latent_profile = np.array(response['vectors'][str(profile_id)]["values"])
+    embeddings = np.array(requests.post(url + "/mlp", json={"input": review})["result"])
     new_latents = latent_profile + embeddings
     new_profile = requests.post(url + "/decoder", json={"input": new_latents.tolist()})["result"]
     current_metadata = response['vectors'][str(profile_id)]['metadata']
