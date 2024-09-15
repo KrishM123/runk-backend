@@ -7,9 +7,6 @@ import json
 from urllib.parse import urlparse
 import requests
 from search import *
-import torch
-from models.Autoencoder import Autoencoder
-from models.MLP import MLP
 import vectorDB_functions
 import requests
 
