@@ -61,10 +61,13 @@ def add_user():
         cur.close()
         conn.close()
 
-        return jsonify({'message': 'Product added successfully!'}), 201
+        return jsonify({'message': 'User added successfully!'}), 201
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+
+
 
 if __name__ == "__main__":
     app.run()
