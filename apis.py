@@ -1,3 +1,4 @@
+import logging
 from flask import Flask, jsonify, request
 import os
 from dotenv import load_dotenv
@@ -7,6 +8,7 @@ import json
 load_dotenv()
 
 app = Flask(__name__)
+app.logger.setLevel(logging.DEBUG)
 
 def get_db_connection():
     conn = psycopg2.connect(
