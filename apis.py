@@ -55,10 +55,12 @@ def add_user():
 
         conn = get_db_connection()
         cur = conn.cursor()
+        print('pre sql')
         cur.execute(
             'INSERT INTO Products (id, email, 40-dim) VALUES (%s, %s, %s)',
             (user_id, user_email, profile)
         )
+        print('post sql')
         conn.commit()
         cur.close()
         conn.close()
