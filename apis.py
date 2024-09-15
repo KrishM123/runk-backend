@@ -58,7 +58,7 @@ def add_product():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            'INSERT INTO Products (name) VALUES (%s) RETURNING id',
+            "INSERT INTO Products (name) VALUES (%s) RETURNING id",
             (product_name,)
         )
         new_product_id = cur.fetchone()[0]
@@ -87,7 +87,7 @@ def add_user():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            'INSERT INTO Users (id, email, profile) VALUES (%s, %s, %s)',
+            "INSERT INTO Users (id, email, profile) VALUES (%s, %s, %s)",
             (user_id, user_email, profile)
         )
         conn.commit()
