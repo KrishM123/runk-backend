@@ -12,8 +12,6 @@ import requests
 
 
 load_dotenv()
-pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
-index = pc.Index("ranked")
 app = Flask(__name__)
 app.logger.setLevel(logging.DEBUG)
 
