@@ -20,7 +20,7 @@ app = Flask(__name__)
 app.logger.setLevel(logging.DEBUG)
 
 autoencoder_model = Autoencoder(encoder_dims=[47, 32, 24, 20, 16, 10], decoder_dims=[10, 16, 20, 24, 32, 47])
-autoencoder_model.load_state_dict(torch.load("model_checkpoints/mlp_best_model.pth", weights_only=True))
+autoencoder_model.load_state_dict(torch.load("model_checkpoints/autoencoder_best_model.pth", weights_only=True))
 autoencoder_model.eval()
 
 mlp_model = MLP(dims=[384, 256, 128, 64, 32, 16, 10])
