@@ -67,6 +67,18 @@ def add_product():
 
         conn = get_db_connection()
         cur = conn.cursor()
+
+        # Check if the product already exists
+        cur.execute(
+            "SELECT id FROM products WHERE name = %s",
+            (product_name,)
+        )
+        existing_product = cur.fetchone()
+
+        if existing_product:
+            return jsonify({'message': 'Product already exists', 'product_id': existing_product[0]}), 200
+
+        # If product does not exist, insert it
         cur.execute(
             "INSERT INTO products (name) VALUES (%s) RETURNING id",
             (product_name,)
@@ -163,6 +175,8 @@ def user_review():
         user_email = review_data.get('user_email')
         review_text = review_data.get('review_text')
         product_name = review_data.get('product_name')
+
+        # Fetching product and user IDs
         product_id = get_product_id_by_name(product_name)
         user_id = get_user_id_by_email(user_email)
         user_json_profile = convert_textvec_to_profilejson(get_embedding_by_id(user_id))
@@ -170,12 +184,34 @@ def user_review():
         conn = get_db_connection()
         cur = conn.cursor()
         
+        # If product doesn't exist, insert it into the products table
         if not product_id:
             cur.execute(
                 "INSERT INTO products (name) VALUES (%s) RETURNING id",
                 (product_name,)
             )
+            product_id = cur.fetchone()[0]
             conn.commit()
+        
+        # Insert review into the reviews table
+        cur.execute(
+            "INSERT INTO reviews (text) VALUES (%s) RETURNING id",
+            (review_text,)
+        )
+        review_id = cur.fetchone()[0]
+        conn.commit()
+        
+        # Insert into product_review table
+        cur.execute(
+            "INSERT INTO product-review (product_id, review_id) VALUES (%s, %s)",
+            (product_id, review_id)
+        )
+        
+        # Insert into user_review table
+        cur.execute(
+            "INSERT INTO user-review (user_id, review_id) VALUES (%s, %s)",
+            (user_id, review_id)
+        )
         
         #TODO: Aly take store_pinecone(review_text, user_id, product_id). Return newly created profile
         
@@ -185,6 +221,7 @@ def user_review():
             "UPDATE users SET profile = %s WHERE id = %s",
             (updated_user_json_profile, user_id)
         )
+        
         conn.commit()
         cur.close()
         conn.close()
