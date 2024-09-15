@@ -3,35 +3,26 @@ from models.embed_reviews import SBERT_embedding_model
 from pinecone.grpc import PineconeGRPC as Pinecone
 from dotenv import load_dotenv
 import os
-from models.Autoencoder import Autoencoder
-from models.MLP import MLP
-
+import requests
 
 load_dotenv()
 
 pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 index = pc.Index("ranked")
 
-autoencoder_model = Autoencoder(encoder_dims=[47, 32, 24, 20, 16, 10], decoder_dims=[10, 16, 20, 24, 32, 47])
+url = "http://coherent-polite-bluejay.ngrok-free.app/"
 
-autoencoder_model.load_state_dict(torch.load("model_checkpoints/autoencoder_best_model.pth", weights_only=True))
-autoencoder_model.eval()
-
-mlp_model = MLP(dims=[384, 256, 128, 64, 32, 16, 10])
-mlp_model.load_state_dict(torch.load("model_checkpoints/mlp_best_model.pth", weights_only=True))
-mlp_model.eval()
-
-def update_profile(autoencoder, MLP, profile_id, review: str, product_id):
+def update_profile(profile_id, review: str, product_id):
     '''
     profile: customer profile (not the latents)
     Updates the profile based on the new review
     '''
-    review = torch.from_numpy(SBERT_embedding_model.encode(review))
+    review = requests.post(url + "/encode_review", json={"input": review})["result"]
     response = index.fetch(ids=[str(profile_id)])
     latent_profile = torch.tensor(response['vectors'][str(profile_id)]["values"])
-    embeddings = MLP(review)
+    embeddings = torch.tensor(requests.post(url + "/mlp", json={"input": review})["result"], dtype=torch.float32)
     new_latents = latent_profile + embeddings
-    new_profile = autoencoder.decode(latent_profile) * 100
+    new_profile = requests.post(url + "/decoder", json={"input": new_latents.tolist()})["result"]
     current_metadata = response['vectors'][str(profile_id)]['metadata']
     product_ids = current_metadata["product_ids"]
     product_ids.append(str(product_id))
@@ -45,8 +36,8 @@ def update_profile(autoencoder, MLP, profile_id, review: str, product_id):
     )
     return new_profile
 
-def upload_profile(profile, product_ids, profile_id, autoencoder_model):
-    value = autoencoder_model.encode(torch.tensor(profile, dtype=torch.float32)/100)
+def upload_profile(profile, product_ids, profile_id):
+    value = requests.post(url + "/encoder", json={"input": profile})["result"]
     index.upsert(
     vectors=[
         {

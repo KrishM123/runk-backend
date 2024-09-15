@@ -11,6 +11,7 @@ import torch
 from models.Autoencoder import Autoencoder
 from models.MLP import MLP
 import vectorDB_functions
+import requests
 
 
 load_dotenv()
@@ -18,15 +19,6 @@ pc = Pinecone(api_key=os.environ.get("PINECONE_API_KEY"))
 index = pc.Index("ranked")
 app = Flask(__name__)
 app.logger.setLevel(logging.DEBUG)
-
-autoencoder_model = Autoencoder(encoder_dims=[47, 32, 24, 20, 16, 10], decoder_dims=[10, 16, 20, 24, 32, 47])
-autoencoder_model.load_state_dict(torch.load("model_checkpoints/autoencoder_best_model.pth", weights_only=True))
-autoencoder_model.eval()
-
-mlp_model = MLP(dims=[384, 256, 128, 64, 32, 16, 10])
-mlp_model.load_state_dict(torch.load("model_checkpoints/autoencoder/mlp_best_model.pth", weights_only=True))
-mlp_model.eval()
-
 
 
 def get_db_connection():
@@ -188,7 +180,7 @@ def user_review():
         #TODO: Aly take store_pinecone(review_text, user_id, product_id). Return newly created profile
         
         
-        updated_user_json_profile = vectorDB_functions.update_profile(autoencoder_model, mlp_model, user_id, review_text, product_id)
+        updated_user_json_profile = vectorDB_functions.update_profile(user_id, review_text, product_id)
         cur.execute(
             "UPDATE users SET profile = %s WHERE id = %s",
             (updated_user_json_profile, user_id)
