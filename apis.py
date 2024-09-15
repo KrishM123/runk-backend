@@ -17,8 +17,14 @@ def get_db_connection():
     )
     return conn
 
+@app.route('/', methods=['GET'])
+def home():
+    app.logger.info("Home route accessed")
+    return "Hello, World!"
+
 @app.route('/add_product', methods=['POST'])
 def add_product():
+    app.logger.info("add_product route accessed")
     try:
         product_data = request.get_json()
         product_id = product_data.get('product_id')
@@ -41,9 +47,19 @@ def add_product():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/add_user', methods=['POST'])
+def add_user():
+    app.logger.info("add_user route accessed")
+    # ... rest of the function ...
+
+# Add this at the end of your file
+if __name__ == "__main__":
+    app.run(debug=True)
     
 @app.route('/add_user', methods=['POST'])
 def add_user():
+    app.logger.info("add_user route accessed")
     try:
         user_data = request.get_json()
         user_id = user_data.get('user_id')
@@ -55,12 +71,10 @@ def add_user():
 
         conn = get_db_connection()
         cur = conn.cursor()
-        print('pre sql')
         cur.execute(
-            'INSERT INTO Products (id, email, 40-dim) VALUES (%s, %s, %s)',
+            'INSERT INTO Users (id, email, profile) VALUES (%s, %s, %s)',
             (user_id, user_email, profile)
         )
-        print('post sql')
         conn.commit()
         cur.close()
         conn.close()
