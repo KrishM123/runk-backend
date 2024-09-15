@@ -4,6 +4,7 @@ import os
 from dotenv import load_dotenv
 import psycopg2
 import json
+from urllib.parse import urlparse
 
 load_dotenv()
 
@@ -11,12 +12,26 @@ app = Flask(__name__)
 app.logger.setLevel(logging.DEBUG)
 
 def get_db_connection():
-    conn = psycopg2.connect(
-        host=os.getenv("POSTGRES_HOST"),
-        database=os.getenv("POSTGRES_DATABASE"),
-        user=os.getenv("POSTGRES_USER"),
-        password=os.getenv("POSTGRES_PASSWORD")
-    )
+    database_url = os.getenv("POSTGRES_URL")
+    
+    if database_url:
+        result = urlparse(database_url)
+        conn = psycopg2.connect(
+            database=result.path[1:],
+            user=result.username,
+            password=result.password,
+            host=result.hostname,
+            port=result.port
+        )
+    else:
+        conn = psycopg2.connect(
+            host=os.getenv("POSTGRES_HOST"),
+            database=os.getenv("POSTGRES_DATABASE"),
+            user=os.getenv("POSTGRES_USER"),
+            password=os.getenv("POSTGRES_PASSWORD"),
+            port=os.getenv("POSTGRES_PORT")
+        )
+    
     return conn
 
 @app.route('/', methods=['GET'])
