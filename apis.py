@@ -29,25 +29,32 @@ def add_product():
     app.logger.info("add_product route accessed")
     try:
         product_data = request.get_json()
-        product_id = product_data.get('product_id')
+        if not product_data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+
         product_name = product_data.get('product_name')
 
-        if not isinstance(product_id, int) or not isinstance(product_name, int):
-            return jsonify({'error': 'Product ID and Product Name must be integers'}), 400
+        if product_name is None:
+            return jsonify({'error': 'Missing product_name'}), 400
+
+        if not isinstance(product_name, str):
+            return jsonify({'error': 'Product Name must be a string'}), 400
 
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            'INSERT INTO Products (id, name) VALUES (%s, %s)',
-            (product_id, product_name)
+            'INSERT INTO Products (name) VALUES (%s) RETURNING id',
+            (product_name,)
         )
+        new_product_id = cur.fetchone()[0]
         conn.commit()
         cur.close()
         conn.close()
 
-        return jsonify({'message': 'Product added successfully!'}), 201
+        return jsonify({'message': 'Product added successfully!', 'product_id': new_product_id}), 201
 
     except Exception as e:
+        app.logger.error(f"Error in add_product: {str(e)}")
         return jsonify({'error': str(e)}), 500
 
 @app.route('/add_user', methods=['POST'])
@@ -121,8 +128,7 @@ def ranked_review():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
-    
-    
+
 def convert_textvec_to_profilejson(textvec):
     keys = [
         "Height", "Weight", "Body Mass Index (BMI)", "Skin Tone", "Hair Color", "Eye Color",
