@@ -1,5 +1,6 @@
 import logging
 from flask import Flask, jsonify, request
+from flask_cors import CORS
 import os
 from dotenv import load_dotenv
 import psycopg2
@@ -14,6 +15,7 @@ import requests
 load_dotenv()
 app = Flask(__name__)
 app.logger.setLevel(logging.DEBUG)
+CORS(app)
 
 
 def get_db_connection():
