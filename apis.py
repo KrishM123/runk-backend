@@ -69,7 +69,7 @@ def add_user():
         return jsonify({'error': str(e)}), 500
 
 @app.route('/ranked_review', methods=['GET'])
-def add_product():
+def ranked_review():
     try:
         review_data = request.get_json()
         user_email = review_data.get('user_email')
