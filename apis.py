@@ -124,10 +124,10 @@ def ranked_review():
         format_strings = ','.join(['%s'] * len(user_ids))
 
         cur.execute(f"""
-            SELECT user_review.user_id, reviews.text
-            FROM user_review
-            JOIN reviews ON user_review.review_id = reviews.id
-            WHERE user_review.user_id IN ({format_strings});
+            SELECT user-review.user_id, reviews.text
+            FROM user-review
+            JOIN reviews ON user-review.review_id = reviews.id
+            WHERE user-review.user_id IN ({format_strings});
         """, tuple(user_ids))
 
         review_data = cur.fetchall()
@@ -143,6 +143,44 @@ def ranked_review():
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+@app.route('/user_review', methods=['POST'])
+def user_review():
+    try:
+        review_data = request.get_json()
+        user_email = review_data.get('user_email')
+        review_text = review_data.get('review_text')
+        product_name = review_data.get('product_name')
+        product_id = get_product_id_by_name(product_name)
+        user_id = get_user_id_by_email(user_email)
+        user_json_profile = convert_textvec_to_profilejson(get_embedding_by_id(user_id))
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        if not product_id:
+            cur.execute(
+                "INSERT INTO products (name) VALUES (%s) RETURNING id",
+                (product_name,)
+            )
+            conn.commit()
+        
+        #TODO: Aly take store_pinecone(review_text, user_id, product_id). Return newly created profile
+        
+        updated_user_json_profile = user_json_profile
+        cur.execute(
+            "UPDATE users SET profile = %s WHERE id = %s",
+            (updated_user_json_profile, user_id)
+        )
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify({'message': 'Complete'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 
 def convert_textvec_to_profilejson(textvec):
     keys = [
@@ -186,5 +224,45 @@ def get_product_id_by_name(product_name):
         print(f"Error: {e}")
         return None
     
+def get_user_id_by_email(user_email):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('SELECT id FROM users WHERE user_email = %s', (user_email,))
+        result = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+
+        if result:
+            return result[0]
+        else:
+            return None
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+    
+def get_embedding_by_id(user_id):
+    try:
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute('SELECT 40-dim FROM users WHERE id = %s', (user_id,))
+        result = cur.fetchone()
+        
+        cur.close()
+        conn.close()
+
+        if result:
+            return result[0]
+        else:
+            return None
+
+    except Exception as e:
+        print(f"Error: {e}")
+        return None
+
 if __name__ == "__main__":
     app.run()
