@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 import psycopg2
 import json
 from urllib.parse import urlparse
+import requests
+from search import *
 
 load_dotenv()
 
@@ -177,6 +179,73 @@ def user_review():
         conn.close()
         
         return jsonify({'message': 'Complete'}), 201
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+@app.route('/rank_products', methods=['GET'])
+def rank_products():
+    try:
+        product_data = request.get_json()
+        user_email = product_data.get('user_email')
+        product_id_list = product_data.get('product_id_list')
+        user_id = get_user_id_by_email(user_email)
+        
+        conn = get_db_connection()
+        cur = conn.cursor()
+        
+        # Fetch product names for the given product_id_list
+        sql_query = """
+        SELECT
+            product_id,
+            product_name
+        FROM product
+        WHERE product_id = ANY(%s);
+        """
+        cur.execute(sql_query, (product_id_list,))
+        products = cur.fetchall()  # List of (product_id, product_name)
+        
+        result = []
+        
+        for product_id, product_name in products:
+            # Call the other API with product_name and user_email
+            payload = {
+                'product_name': product_name,
+                'user_email': user_email
+            }
+            # Replace 'http://other-api.com/get_review_similarity' with the actual API endpoint
+            response = requests.post('http://other-api.com/get_review_similarity', json=payload)
+            
+            if response.status_code == 200:
+                data = response.json()  # Should be a list of tuples
+                reviews_list = []
+                for review_tuple in data:
+                    # Each review_tuple is (review, similarity)
+                    review, similarity = review_tuple
+                    review_dict = {'review': review, 'profile_score': similarity}
+                    reviews_list.append(review_dict)
+                # Add to result
+                product_info = {
+                    'product_id': product_id,
+                    'product_name': product_name,
+                    'reviews': reviews_list
+                }
+                result.append(product_info)
+            else:
+                # Handle error, perhaps log it or append an empty reviews list
+                product_info = {
+                    'product_id': product_id,
+                    'product_name': product_name,
+                    'reviews': []
+                }
+                result.append(product_info)
+        
+        sorted_profiles = iterate(result)
+        conn.commit()
+        cur.close()
+        conn.close()
+        
+        return jsonify(sorted_profiles), 200
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
