@@ -58,7 +58,7 @@ def add_product():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO Products (name) VALUES (%s) RETURNING id",
+            "INSERT INTO products (name) VALUES (%s) RETURNING id",
             (product_name,)
         )
         new_product_id = cur.fetchone()[0]
@@ -87,7 +87,7 @@ def add_user():
         conn = get_db_connection()
         cur = conn.cursor()
         cur.execute(
-            "INSERT INTO Users (id, email, profile) VALUES (%s, %s, %s)",
+            "INSERT INTO users (id, email, profile) VALUES (%s, %s, %s)",
             (user_id, user_email, profile)
         )
         conn.commit()
@@ -124,9 +124,9 @@ def ranked_review():
         format_strings = ','.join(['%s'] * len(user_ids))
 
         cur.execute(f"""
-            SELECT user_review.user_id, Reviews.text
+            SELECT user_review.user_id, reviews.text
             FROM user_review
-            JOIN Reviews ON user_review.review_id = Reviews.id
+            JOIN reviews ON user_review.review_id = reviews.id
             WHERE user_review.user_id IN ({format_strings});
         """, tuple(user_ids))
 
