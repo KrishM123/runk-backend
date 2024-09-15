@@ -53,15 +53,6 @@ def add_product():
 @app.route('/add_user', methods=['POST'])
 def add_user():
     app.logger.info("add_user route accessed")
-    # ... rest of the function ...
-
-# Add this at the end of your file
-if __name__ == "__main__":
-    app.run(debug=True)
-    
-@app.route('/add_user', methods=['POST'])
-def add_user():
-    app.logger.info("add_user route accessed")
     try:
         user_data = request.get_json()
         user_id = user_data.get('user_id')
